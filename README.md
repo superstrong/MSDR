@@ -45,8 +45,10 @@ It should [look like this](https://github.com/superstrong/MSDR/blob/master/Admin
 * Optionally, create another smart list that serves as an exclusion list for the program. Creating a smart list just for SDR Exclusions--which also contains your Global Exclusion List--gives you the flexibility to add more restrictive filters to prevent you from accidentally calling anyone who shouldn't be called.
 
  3. Create the new Marketo database lead fields
-There are [four lead fields](https://github.com/superstrong/MSDR/blob/master/Admin%20Changes/lead-custom-fields-with-layout.png) needed to trigger next steps and [one more lead field](https://github.com/superstrong/MSDR/blob/master/Additional%20Campaigns/marketo-id-sync.png) needed to provide a link in the alert email directly to the editable Market lead view.
+There are [four lead fields](https://github.com/superstrong/MSDR/blob/master/Admin%20Changes/lead-custom-fields-with-layout.png) needed to trigger next steps, two more to handle other interruptions, and [one more lead field](https://github.com/superstrong/MSDR/blob/master/Additional%20Campaigns/marketo-id-sync.png) needed to provide a link in the alert email directly to the editable Market lead view.
 * SDR Manual Snooze Until At - dateTime
+* SDR Offline Until At - dateTime
+* SDR Window Closed - checkbox
 * SDR Reject Lead - checkbox
 * SDR Recycle Lead - checkbox
 * SDR Qualify Lead - checkbox
@@ -65,3 +67,28 @@ Following [the structure detailed here](https://github.com/superstrong/MSDR/tree
 Most campaigns use "Campaign is Requested" (Marketo Flow Action) as the trigger. The icon for this type of smart campaign is a light bulb with a green arrow on top. When building your smart campaigns, you can even start by having all campaigns use this trigger; this will allow you to activate everything without fear that you will accidentally start anything in motion.
 
 You'll need to activate every campaign as you go in order to make it visible to other campaigns. In the "Schedule" section, choose "Run flow every time" and activate. You can change this frequency later if you like.
+
+## Explanation
+The SDR program is broken into three sections: Campaign Logic, Emails, and Progression Statuses.
+
+The Campaign Logic has three sections:
+
+ 1. Run Program - keeps leads in a wait step for pre-defined amounts of time--e.g., 30 minutes or 4 hours
+ 2. Alert SDR - looks for interruptions and sends the alert email
+ 3. Interruptions - handles deviations from the pre-defined schedule
+
+Leads bubble down--and back up--through the sections. For example, when a pre-defined wait step has passed, a lead is moved to the "Alert SDR" section. If it's now after business hours, a "Window Closed" interruption will take over, keeping the lead in a wait step, then sending it back up to the "Alert SDR" section when the wait step completes.  Once the alert has successfully been sent, the progression status and program status changes, and the lead moves back up to the "Run Program" section to wait in the next pre-defined wait step.
+
+Once started, the program runs itself without intervention by the SDR, meaning it operates under the assumption that an SDR will attempt a phone call whenever she receives an alert and that she will not reach the lead. The program only stops when it runs out of steps (currently 6 call attempts) or is stopped via a smart campaign in the "Leave Flow" folder.
+
+### Nuances
+
+Because the new "SDR" lead fields (reject, recycle, etc.) will trigger changes _immediately_, the campaigns listening for those changes have a 1-minute wait step built into them. This gives you one minute to undo your mistake. If after one minute the value has changed back--a checkbox unchecked or a dateTime returned to null--the smart campaign will stop itself.
+
+Only five smart campaigns do not use "Campaign is requested" as triggers:
+
+ 1. "SDR Go Offline" - the SDR must request this manually. (While viewing the "SDR Offline" smart list members, the SDR should "select all", then request the "SDR Go Offline" campaign.)
+ 2. "SDR Trigger Lead Snooze" - looks for changes to "SDR Manual Snooze Until At" where the new value is not NULL
+ 3. "SDR Trigger Lead Snooze - Undo" - looks for changes to the "SDR Manual Snooze Unti At" where the new value is NULL
+ 4. "SDR Window Close" - M-F at 6pm, grabs all leads active in the program
+ 5. "SDR Window Open" - M-F at 10am, grabs all leads active in the program
