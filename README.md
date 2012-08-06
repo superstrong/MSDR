@@ -92,3 +92,7 @@ Only five smart campaigns do not use "Campaign is requested" as triggers:
  3. "SDR Trigger Lead Snooze - Undo" - looks for changes to the "SDR Manual Snooze Unti At" where the new value is NULL
  4. "SDR Window Close" - M-F at 6pm, grabs all leads active in the program
  5. "SDR Window Open" - M-F at 10am, grabs all leads active in the program
+ 
+ ## Known Issues
+ 
+ Leads created M-F but outside of business hours, or any time while the SDR is manually "offline", will trigger immediate alerts rather than queuing for delivery later. [Details](https://github.com/superstrong/MSDR/issues/1)
